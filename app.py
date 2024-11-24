@@ -3,8 +3,11 @@ import yt_dlp
 import os
 import threading
 import platform
+from flask_cors import CORS  # Import CORS to handle cross-origin requests
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
 downloads = {}  # To track download progress and statuses.
 
 # Base folder setup for both desktop and mobile
@@ -43,9 +46,6 @@ def download_video(url, quality, video_id):
         'format': f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]',
         'progress_hooks': [progress_hook],
         'outtmpl': os.path.join(video_dir, '%(title)s.%(ext)s'),  # Save video inside the video ID folder
-        'continuedl': True,  # Allow download to continue from where it left off
-        'retries': 10,  # Retry multiple times in case of failure
-        'noplaylist': True,  # Disable playlist downloading
     }
 
     # Fallback to 720p if quality isn't available
