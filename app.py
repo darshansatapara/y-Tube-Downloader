@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, send_file
+import logging
 import yt_dlp
 import os
-import threading
 import platform
+import threading
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS  # Import CORS to handle cross-origin requests
 
 app = Flask(__name__)
@@ -24,6 +25,9 @@ else:
     if not os.path.exists(mobile_folder):
         os.makedirs(mobile_folder)
     download_folder = mobile_folder
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def serve_html():
@@ -53,11 +57,17 @@ def download_video(url, quality, video_id):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             downloads[video_id]['status'] = "Completed"
-    except Exception:
+    except Exception as e:
+        logging.error(f"Download error for {url}: {str(e)}")
+        downloads[video_id]['status'] = f"Error: {str(e)}"
         ydl_opts['format'] = 'best[height<=720]'
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.extract_info(url, download=True)
-            downloads[video_id]['status'] = "Completed"
+            try:
+                ydl.extract_info(url, download=True)
+                downloads[video_id]['status'] = "Completed"
+            except Exception as e:
+                logging.error(f"Fallback download error: {str(e)}")
+                downloads[video_id]['status'] = f"Error: {str(e)}"
 
 @app.route('/download', methods=['POST'])
 def start_download():
