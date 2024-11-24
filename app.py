@@ -27,12 +27,7 @@ else:
 
 @app.route('/')
 def serve_html():
-    file_path = os.path.join('templates', 'Youtube.html')
-    if os.path.exists(file_path):
-        return send_file(file_path)
-    else:
-        return "File not found", 404
-
+    return send_file('Youtube.html')
 
 # Function to download video
 def download_video(url, quality, video_id):
