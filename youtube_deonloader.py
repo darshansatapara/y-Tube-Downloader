@@ -12,8 +12,8 @@
 # # --- Check for FFmpeg ---
 # def check_ffmpeg():
 #     try:
-#         result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, check=True)
-#         st.info(f"✅ FFmpeg found: {result.stdout.splitlines()[0]}")
+#         result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, encoding="utf-8", check=True)
+#         logging.info(f"FFmpeg found: {result.stdout.splitlines()[0]}")
 #         return True
 #     except (subprocess.CalledProcessError, FileNotFoundError) as e:
 #         st.error(f"❌ FFmpeg is not installed or not found in PATH. Please install FFmpeg to enable audio merging. Error: {str(e)}")
@@ -167,7 +167,7 @@
 #                     # Verify audio stream
 #                     result = subprocess.run(
 #                         ["ffprobe", "-show_streams", filename],
-#                         capture_output=True, text=True, check=True
+#                         capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
 #                     )
 #                     has_audio = "codec_type=audio" in result.stdout
 #                     if not has_audio:
@@ -178,7 +178,7 @@
 #                             filename = ydl.prepare_filename(info)
 #                             result = subprocess.run(
 #                                 ["ffprobe", "-show_streams", filename],
-#                                 capture_output=True, text=True, check=True
+#                                 capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
 #                             )
 #                             has_audio = "codec_type=audio" in result.stdout
 #                             if not has_audio:
@@ -187,7 +187,7 @@
 #                         with open(filename, "rb") as f:
 #                             time.sleep(1)  # Ensure file is fully written
 #                             st.download_button(
-#                                 label=f"⬇️ Download {os.path.basename(filename)}",
+#                                 label=f"⬇️ Saved in ytube-download folder: {os.path.basename(filename)}",
 #                                 data=f,
 #                                 file_name=os.path.basename(filename),
 #                                 mime="video/mp4"
@@ -220,7 +220,6 @@
 #     st.success("✅ All downloaded files cleared.")
 
 
-
 import streamlit as st
 import yt_dlp
 import os
@@ -239,7 +238,11 @@ def check_ffmpeg():
         logging.info(f"FFmpeg found: {result.stdout.splitlines()[0]}")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        st.error(f"❌ FFmpeg is not installed or not found in PATH. Please install FFmpeg to enable audio merging. Error: {str(e)}")
+        st.error(
+            f"❌ FFmpeg is not installed or not found in PATH. Please install FFmpeg to enable audio merging. "
+            f"Error: {str(e)}\n\n"
+            f"For Streamlit Cloud, ensure a `packages.txt` file exists in your repository with 'ffmpeg' listed."
+        )
         return False
 
 if not check_ffmpeg():
@@ -410,7 +413,7 @@ if download_button and st.session_state.video_info:
                         with open(filename, "rb") as f:
                             time.sleep(1)  # Ensure file is fully written
                             st.download_button(
-                                label=f"⬇️ Saved in ytube-download folder: {os.path.basename(filename)}",
+                                label=f"⬇️ Download {os.path.basename(filename)}",
                                 data=f,
                                 file_name=os.path.basename(filename),
                                 mime="video/mp4"
