@@ -300,7 +300,11 @@ url = st.text_input("🔗 Enter YouTube URL (Video or Playlist):")
 # --- Fetch Video/Playlist Metadata ---
 if url and url != st.session_state.get("last_url", ""):
     try:
-        with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+        ydl_opts = {
+            "quiet": True,
+            "cookiefile": "cookies.txt"  # Path to cookies file (optional, place in project root)
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             st.session_state.video_info = ydl.extract_info(url, download=False)
         st.session_state.last_url = url
 
@@ -382,6 +386,8 @@ if download_button and st.session_state.video_info:
                     'key': 'FFmpegVideoConvertor',
                     'preferedformat': 'mp4'
                 }],
+                'cookiefile': 'cookies.txt',  # Path to cookies file (optional)
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'verbose': True
             }
 
@@ -419,8 +425,16 @@ if download_button and st.session_state.video_info:
                                 mime="video/mp4"
                             )
             except yt_dlp.DownloadError as de:
-                st.error(f"❌ Download failed for {video['title']}: {str(de)}")
-                logging.error(f"Download error: {str(de)}")
+                if "HTTP Error 403: Forbidden" in str(de):
+                    st.error(
+                        f"❌ Download failed for {video['title']}: HTTP Error 403: Forbidden. "
+                        f"This video may be restricted (e.g., age-restricted, geo-blocked, or private). "
+                        f"Try providing a cookies file (`cookies.txt`) in the project root or testing with a public video."
+                    )
+                    logging.error(f"403 Forbidden error for {video['title']}: {str(de)}")
+                else:
+                    st.error(f"❌ Download failed for {video['title']}: {str(de)}")
+                    logging.error(f"Download error: {str(de)}")
             except subprocess.CalledProcessError as pe:
                 st.error(f"❌ FFprobe error for {video['title']}: {str(pe)}")
                 logging.error(f"FFprobe error: {str(pe)}")
